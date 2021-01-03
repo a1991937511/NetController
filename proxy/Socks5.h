@@ -9,7 +9,7 @@
 
 class Socks5 : public Proxy {
 public:
-    Socks5(boost::asio::io_context &ioc, const boost::asio::ip::tcp::endpoint& socks5Endpoint, const boost::asio::ip::address &address, uint16_t port);
+    Socks5(boost::asio::io_context &ioc, boost::asio::ip::tcp::endpoint  socks5Endpoint, const boost::asio::ip::address &address, uint16_t port);
 
     void asyncStart(readyHandler handler) override;
 
@@ -17,6 +17,9 @@ public:
 
     void asyncWrite(char *buf, std::size_t size, writeHandler handler) override;
 
+private:
+    boost::asio::ip::tcp::socket socks5;
+    boost::asio::ip::tcp::endpoint socks5Endpoint;
 };
 
 
