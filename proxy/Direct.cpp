@@ -49,7 +49,7 @@ void Direct::asyncRead(char *buf, std::size_t size, readHandler handler) {
 
 void Direct::asyncWrite(char *buf, std::size_t size, writeHandler handler) {
     auto self = shared_from_this();
-    remoteSocket.async_write_some(boost::asio::buffer(buf, size),
+    boost::asio::async_write(remoteSocket, boost::asio::buffer(buf, size),
             [self, handler](boost::system::error_code ec, std::size_t size) {
                 if (ec) {
                     if (ec == boost::asio::error::operation_aborted) {
@@ -65,6 +65,7 @@ void Direct::asyncWrite(char *buf, std::size_t size, writeHandler handler) {
 Direct::~Direct() {
     boost::system::error_code error;
     remoteSocket.shutdown(remoteSocket.shutdown_both, error);
+    remoteSocket.close(error);
 }
 
 

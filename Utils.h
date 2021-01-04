@@ -6,6 +6,7 @@
 #define NETCONTROLLER_UTILS_H
 
 #include <boost/asio.hpp>
+#include <openssl/evp.h>
 #include <spdlog/spdlog.h>
 
 #ifndef SO_ORIGINAL_DST
@@ -40,6 +41,39 @@ public:
     template<class T>
     static void setSocketMask(boost::asio::basic_socket<T> &socket, int mask, boost::system::error_code &errorCode) {
         socket.set_option(boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_MARK>(mask), errorCode);
+    }
+
+    static std::string SHA224(const std::string &message) {
+        uint8_t digest[EVP_MAX_MD_SIZE];
+        char mdString[(EVP_MAX_MD_SIZE << 1) + 1];
+        unsigned int digest_len;
+        EVP_MD_CTX *ctx;
+        if ((ctx = EVP_MD_CTX_new()) == nullptr) {
+            SPDLOG_ERROR("could not create hash context");
+            return "";
+        }
+        if (!EVP_DigestInit_ex(ctx, EVP_sha224(), nullptr)) {
+            EVP_MD_CTX_free(ctx);
+            SPDLOG_ERROR("could not initialize hash context");
+            return "";
+        }
+        if (!EVP_DigestUpdate(ctx, message.c_str(), message.length())) {
+            EVP_MD_CTX_free(ctx);
+            SPDLOG_ERROR("could not update hash");
+            return "";
+        }
+        if (!EVP_DigestFinal_ex(ctx, digest, &digest_len)) {
+            EVP_MD_CTX_free(ctx);
+            SPDLOG_ERROR("could not output hash");
+            return "";
+        }
+
+        for (unsigned int i = 0; i < digest_len; ++i) {
+            sprintf(mdString + (i << 1), "%02x", (unsigned int)digest[i]);
+        }
+        mdString[digest_len << 1] = '\0';
+        EVP_MD_CTX_free(ctx);
+        return std::string(mdString);
     }
 };
 

@@ -5,6 +5,8 @@
 #include "Session.h"
 #include "Utils.h"
 #include "proxy/Direct.h"
+#include "proxy/Socks5.h"
+#include "proxy/Torjan.h"
 
 namespace asio = boost::asio;
 namespace socket_option = boost::asio::detail::socket_option;
@@ -16,7 +18,12 @@ Session::Session(boost::asio::io_context &ioc, asio::ip::tcp::socket &socket) : 
     resizeRemoteBuf(REMOTE_BUF_LEN);
 
     auto endpoint = Utils::getTargetEndpoint(localSocket.native_handle());
-    proxy = std::make_shared<Direct>(ioc, endpoint.address(), endpoint.port());
+//    proxy = std::make_shared<Direct>(ioc, endpoint.address(), endpoint.port());
+//    auto sock5Endpoint = boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("192.168.42.1"), 10808);
+//    proxy = std::make_shared<Socks5>(ioc, sock5Endpoint, endpoint.address(), endpoint.port());
+
+    proxy = std::make_shared<Torjan>(ioc, "torjan.tindongr.cloud", endpoint.address(), endpoint.port());
+
     SPDLOG_DEBUG("{}:{} connect to {}:{}", localEndpoint.first, localEndpoint.second, endpoint.address().to_string(),
             endpoint.port());
 }
@@ -60,7 +67,7 @@ void Session::remoteAsyncRead() {
             SPDLOG_DEBUG("Remote buf resize to {}", remoteBufLen * 2);
         }
         SPDLOG_DEBUG("Remote buf use {}%", size * 100 / remoteBufLen);
-        localSocket.async_write_some(asio::buffer(remoteBuf, size),
+        boost::asio::async_write(localSocket, asio::buffer(remoteBuf, size),
                 [self, this](boost::system::error_code error, std::size_t size) {
                     if (error) {
                         if (error == asio::error::operation_aborted) {

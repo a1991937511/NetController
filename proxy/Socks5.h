@@ -9,7 +9,9 @@
 
 class Socks5 : public Proxy {
 public:
-    Socks5(boost::asio::io_context &ioc, boost::asio::ip::tcp::endpoint  socks5Endpoint, const boost::asio::ip::address &address, uint16_t port);
+    Socks5(boost::asio::io_context &ioc, boost::asio::ip::tcp::endpoint socks5Endpoint, const boost::asio::ip::address &address, uint16_t port);
+
+    virtual ~Socks5();
 
     void asyncStart(readyHandler handler) override;
 
